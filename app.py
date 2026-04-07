@@ -107,7 +107,7 @@ def main():
         correct_p = user_p == prob["correct_p_bot"]
         correct_s = user_s == prob["correct_total_area"]
 
-        if correct_p && correct_s:
+        if correct_p and correct_s:
             st.success("🎉 Великолепно! Оба ответа верны.")
             st.balloons()
         else:
