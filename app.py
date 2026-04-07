@@ -1,7 +1,6 @@
 import streamlit as st
 import random
 
-# Настройка страницы
 st.set_page_config(
     page_title="Тренажёр: Реставрация комода",
     page_icon="🪵",
@@ -12,13 +11,11 @@ st.set_page_config(
 def generate_problem(seed: int):
     random.seed(seed)
 
-    # 1. Верхний ряд (квадраты)
-    a = random.choice([12, 16, 20, 24, 28])  # сторона квадрата
+    a = random.choice([12, 16, 20, 24, 28])
     n_top = 6
     width = a * n_top
     p_top = 4 * a
 
-    # 2. Средний ряд (4 прямоугольника)
     n_mid = 4
     w_mid = width // n_mid
     h_mid = random.randint(10, a + 5)
@@ -26,13 +23,11 @@ def generate_problem(seed: int):
     p_diff = p_mid - p_top
     s_mid = w_mid * h_mid
 
-    # 3. Нижний ряд (1 большой)
     h_bot = random.randint(20, 40)
     s_bot = width * h_bot
     s_diff = s_bot - s_mid
     p_bot = 2 * (width + h_bot)
 
-    # Общая площадь фасада
     total_area = width * (a + h_mid + h_bot)
 
     return {
@@ -60,24 +55,20 @@ def main():
     if "problem_idx" not in st.session_state:
         st.session_state.problem_idx = 1
 
-    # Боковая панель для выбора задачи
     st.sidebar.header("Список задач")
     problem_numbers = list(range(1, 16))
     selected_num = st.sidebar.selectbox(
         "Выберите номер задачи",
         problem_numbers,
         index=st.session_state.problem_idx - 1,
+        key="problem_select",
     )
 
-    if selected_num != st.session_state.problem_idx:
-        st.session_state.problem_idx = selected_num
-        st.rerun()
+    st.session_state.problem_idx = selected_num
 
-    # Генерация текущей задачи
     prob = generate_problem(st.session_state.problem_idx * 100)
     d = prob["details"]
 
-    # Условие
     st.subheader(f"Задача №{st.session_state.problem_idx}")
     st.markdown(
         f"""
@@ -92,6 +83,7 @@ def main():
     st.divider()
 
     col1, col2 = st.columns(2)
+    pid = st.session_state.problem_idx  # для уникальных ключей
 
     with col1:
         st.write("**Вопрос А:**")
@@ -99,7 +91,7 @@ def main():
             "Сколько сантиметров тесьмы нужно для отделки периметра нижнего ящика?",
             min_value=0,
             value=0,
-            key="input_p",
+            key=f"input_p_{pid}",
         )
 
     with col2:
@@ -108,14 +100,14 @@ def main():
             "Какова общая площадь фасада комода (см²)?",
             min_value=0,
             value=0,
-            key="input_s",
+            key=f"input_s_{pid}",
         )
 
-    if st.button("Проверить решение", type="primary"):
+    if st.button("Проверить решение", type="primary", key=f"check_{pid}"):
         correct_p = user_p == prob["correct_p_bot"]
         correct_s = user_s == prob["correct_total_area"]
 
-        if correct_p and correct_s:
+        if correct_p && correct_s:
             st.success("🎉 Великолепно! Оба ответа верны.")
             st.balloons()
         else:
@@ -135,8 +127,7 @@ def main():
                     f"4. Периметр среднего ящика: {prob['p_top']} + ({prob['p_diff']}) = **{d['p_mid']} см**."
                 )
                 st.write(
-                    f"5. Высота среднего ящика из формулы периметра: "
-                    f"( {d['p_mid']} ÷ 2 ) − {d['w_mid']} = **{d['h_mid']} см**."
+                    f"5. Высота среднего ящика: ( {d['p_mid']} ÷ 2 ) − {d['w_mid']} = **{d['h_mid']} см**."
                 )
                 st.write(
                     f"6. Площадь среднего ящика: {d['w_mid']} × {d['h_mid']} = **{d['s_mid']} см²**."
@@ -150,11 +141,7 @@ def main():
                 st.write(
                     f"9. Общая площадь фасада: {d['width']} × ({d['a']} + {d['h_mid']} + {d['h_bot']}) = **{prob['correct_total_area']} см²**."
                 )
-                st.markdown(
-                    f"**Ответы:** A = `{prob['correct_p_bot']}`, B = `{prob['correct_total_area']}`."
-                )
 
-    # Визуальная подсказка
     st.sidebar.divider()
     st.sidebar.info("📐 Схема комода:")
     st.sidebar.markdown(
